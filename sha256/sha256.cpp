@@ -66,14 +66,14 @@ std::vector<std::array<uint32_t, 64>> preprocess(const std::string& input) {
     // pad 0x80 at the end of message and pad length to multiple of 4 for easier endian conversion
     data.push_back(0x80);
     if(data.size() % 4) {
-        int left = 4 - (data.size() % 4);
-        for(int i = 0; i < left; i++)
+        auto left = 4 - (data.size() % 4);
+        for(size_t i = 0; i < left; i++)
             data.push_back(0);
     }
 
     // split data into blocks of 512 bits (64 bytes are data, 192 bytes are for computation)
-    for(int i = 0, idx = 0; i < block_num; i++) {
-        for(int j = 0; j < 16 && idx < data.size(); j++, idx += 4) {
+    for(size_t i = 0, idx = 0; i < block_num; i++) {
+        for(size_t j = 0; j < 16 && idx < data.size(); j++, idx += 4) {
             if constexpr(std::endian::native == std::endian::little) {
                 blocks[i][j] = (data[idx + 3] << 0) | (data[idx + 2] << 8) | (data[idx + 1] << 16) | (data[idx + 0] << 24);
             } else {
@@ -97,12 +97,12 @@ std::vector<std::array<uint32_t, 64>> preprocess(const std::string& input) {
 
 std::array<uint32_t, 8> one_pass_hash(std::array<uint32_t, 64>& data, std::array<uint32_t, 8> state) {
     // prepare the message schedule W
-    for(int i = 16; i < 64; i ++) {
+    for(size_t i = 16; i < 64; i ++) {
         data[i] = s1(data[i - 2]) + data[i - 7] + s0(data[i - 15]) + data[i - 16];
     }
 
     // compute the intermediate hash value
-    for(int i = 0; i < 64; i++) {
+    for(size_t i = 0; i < 64; i++) {
         auto t1 = state[7] + sigma1(state[4]) + ch(state[4], state[5], state[6]) + K256[i] + data[i];
         auto t2 = sigma0(state[0]) + maj(state[0], state[1], state[2]);
 
@@ -128,7 +128,7 @@ std::array<uint32_t, 8> hash(const std::string& inputString) {
 
     for(auto& block : blocks) {
         auto n = one_pass_hash(block, digest);
-        for(int i = 0; i < 8; i++)
+        for(size_t i = 0; i < 8; i++)
             digest[i] += n[i];
     }
 
